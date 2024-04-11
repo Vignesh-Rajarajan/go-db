@@ -1,8 +1,9 @@
-package parser
+package lexer
 
-import "fmt"
-
-type TokenType int
+import (
+	"fmt"
+	"unicode"
+)
 
 const (
 	TokenTypeIdentifier TokenType = iota
@@ -135,18 +136,38 @@ var SymbolMap = map[string]TokenType{
 	">=": TokenTypeGte,
 }
 
-type Token struct {
-	Type  TokenType
-	Value string
+func isQuote(r rune) bool {
+	return r == '"' || r == '\''
 }
 
-func (t Token) String() string {
-	if t.Type >= TokenTypeComma {
-		return t.Type.String()
+func isDigitOrDot(r rune) bool {
+	return isDigit(r) || r == '.'
+}
+
+func isDigit(r rune) bool {
+	return unicode.IsDigit(r)
+}
+
+func isWordStartWithCharacter(r rune) bool {
+	return unicode.IsLetter(r) || r == '_'
+}
+
+func isWordCharacter(r rune) bool {
+	return isWordStartWithCharacter(r) || isDigit(r) || r == '$'
+}
+
+func isWhitespace(r rune) bool {
+	switch r {
+	case ' ', '\t', '\n', '\r':
+		return true
 	}
-	return fmt.Sprintf("{%s %q}", t.Type, t.Value)
+	return false
 }
 
-func Tokenize(input string) ([]Token, error) {
-	return NewLexer(input).Lex()
+func isPunctuation(r rune) bool {
+	switch r {
+	case ',', '.', ';', '(', ')', '=', '<', '>', '!', '*':
+		return true
+	}
+	return false
 }

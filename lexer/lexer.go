@@ -1,7 +1,8 @@
-package parser
+package lexer
 
 import (
 	"fmt"
+	"github.com/Vignesh-Rajarajan/go-db/custom_error"
 	"strings"
 )
 
@@ -83,7 +84,7 @@ func (l *Lexer) parseForPunctuation(r rune) {
 		l.tokenForPunctuation()
 		l.changeState(LexerStateInitial)
 	default:
-		l.err = fmt.Errorf("unexpected character %q in state %d", r, l.state)
+		l.errorf(l.next, "unexpected character '%c'", r)
 
 	}
 }
@@ -108,7 +109,7 @@ func (l *Lexer) parseForNumber(r rune) {
 		l.tokenForNumber()
 		l.changeState(LexerStatePunctuation)
 	default:
-		l.err = fmt.Errorf("unexpected character %q in state %d", r, l.state)
+		l.errorf(l.next, "unexpected character '%c'", r)
 	}
 }
 
@@ -122,7 +123,7 @@ func (l *Lexer) parseForIdentifier(r rune) {
 		l.tokenForWord()
 		l.changeState(LexerStatePunctuation)
 	default:
-		l.err = fmt.Errorf("unexpected character %q in state %d", r, l.state)
+		l.errorf(l.next, "unexpected character '%c'", r)
 	}
 }
 
@@ -138,7 +139,7 @@ func (l *Lexer) parseForInitialState(r rune) {
 	case isPunctuation(r):
 		l.changeState(LexerStatePunctuation)
 	default:
-		l.err = fmt.Errorf("unexpected character %q", r)
+		l.errorf(l.next, "unexpected character '%c'", r)
 	}
 }
 
@@ -157,7 +158,7 @@ func (l *Lexer) tokenForWord() {
 }
 
 func (l *Lexer) produceToken(from, to int, typ TokenType) {
-	token := Token{Value: string(l.input[from:to]), Type: typ}
+	token := Token{Value: string(l.input[from:to]), Type: typ, From: from, To: to}
 	l.tokens = append(l.tokens, token)
 }
 
@@ -175,8 +176,15 @@ func (l *Lexer) tokenForPunctuation() {
 	val := string(l.input[l.from:l.next])
 	typ, ok := SymbolMap[val]
 	if !ok {
-		l.err = fmt.Errorf("unexpected punctuation %q", val)
+		l.errorf(l.from, "invalid SQL: %q", val)
 		return
 	}
 	l.produceToken(l.from, l.next, typ)
+}
+
+func (l *Lexer) errorf(pos int, s string, r ...any) {
+	l.err = &custom_error.SyntaxError{
+		Position: pos,
+		Message:  fmt.Sprintf(s, r...),
+	}
 }
