@@ -1,7 +1,6 @@
 package lexer
 
 import (
-	"github.com/Vignesh-Rajarajan/go-db/custom_error"
 	"reflect"
 	"testing"
 )
@@ -48,8 +47,8 @@ func TestLexer(t *testing.T) {
 		},
 		{
 			name:  "runs tests successfully with join clause",
-			input: "select foo.x, bar.y from foo left outer join bar",
-			want:  `Select (Identifier "foo") Dot (Identifier "x") Comma (Identifier "bar") Dot (Identifier "y") From (Identifier "foo") Left Outer Join (Identifier "bar")`,
+			input: "select foo.x, bar.y from foo left outer join bar on foo.x = bar.x",
+			want:  `Select (Identifier "foo") Dot (Identifier "x") Comma (Identifier "bar") Dot (Identifier "y") From (Identifier "foo") Left Outer Join (Identifier "bar") On (Identifier "foo") Dot (Identifier "x") Eq (Identifier "bar") Dot (Identifier "x")`,
 		},
 	}
 
@@ -98,18 +97,18 @@ func TestLexError(t *testing.T) {
 
 	cases := []struct {
 		input string
-		want  custom_error.SyntaxError
+		want  SyntaxError
 	}{
 		{
 			input: "select foo,, bar, baz from temptable",
-			want: custom_error.SyntaxError{
+			want: SyntaxError{
 				Position: 10,
 				Message:  `invalid SQL: ",,"`,
 			},
 		},
 		{
 			input: "select % from temptable",
-			want: custom_error.SyntaxError{
+			want: SyntaxError{
 				Position: 7,
 				Message:  `unexpected character '%'`,
 			},

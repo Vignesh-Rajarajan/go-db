@@ -2,7 +2,6 @@ package lexer
 
 import (
 	"fmt"
-	"github.com/Vignesh-Rajarajan/go-db/custom_error"
 	"strings"
 )
 
@@ -183,7 +182,7 @@ func (l *Lexer) tokenForPunctuation() {
 }
 
 func (l *Lexer) errorf(pos int, s string, r ...any) {
-	l.err = &custom_error.SyntaxError{
+	l.err = &SyntaxError{
 		Position: pos,
 		Message:  fmt.Sprintf(s, r...),
 	}

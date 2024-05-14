@@ -1,4 +1,4 @@
-package custom_error
+package lexer
 
 type SyntaxError struct {
 	Message  string

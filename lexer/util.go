@@ -37,7 +37,41 @@ const (
 	TokenTypeInner
 	TokenTypeOuter
 	TokenTypeJoin
+	TokenTypeOn
 )
+
+type BinaryOperator int
+
+const (
+	BinaryOperatorEq BinaryOperator = iota
+	BinaryOperatorNotEq
+	BinaryOperatorLt
+	BinaryOperatorLte
+	BinaryOperatorGt
+	BinaryOperatorGte
+)
+
+var binaryOperatorNames = map[BinaryOperator]string{
+	BinaryOperatorEq:    "Eq",
+	BinaryOperatorNotEq: "NotEq",
+	BinaryOperatorLt:    "Lt",
+	BinaryOperatorLte:   "Lte",
+	BinaryOperatorGt:    "Gt",
+	BinaryOperatorGte:   "Gte",
+}
+
+func (b BinaryOperator) String() string {
+	return binaryOperatorNames[b]
+}
+
+var TokenToBinaryOperator = map[TokenType]BinaryOperator{
+	TokenTypeEq:    BinaryOperatorEq,
+	TokenTypeNotEq: BinaryOperatorNotEq,
+	TokenTypeLt:    BinaryOperatorLt,
+	TokenTypeLte:   BinaryOperatorLte,
+	TokenTypeGt:    BinaryOperatorGt,
+	TokenTypeGte:   BinaryOperatorGte,
+}
 
 func (t TokenType) String() string {
 	switch t {
@@ -99,6 +133,8 @@ func (t TokenType) String() string {
 		return "Outer"
 	case TokenTypeJoin:
 		return "Join"
+	case TokenTypeOn:
+		return "On"
 	}
 	return fmt.Sprintf("Unknown token type %d", t)
 }
@@ -118,6 +154,7 @@ var KeywordMap = map[string]TokenType{
 	"inner":  TokenTypeInner,
 	"outer":  TokenTypeOuter,
 	"join":   TokenTypeJoin,
+	"on":     TokenTypeOn,
 }
 
 var SymbolMap = map[string]TokenType{

@@ -2,7 +2,6 @@ package lexer
 
 import (
 	"fmt"
-	"github.com/Vignesh-Rajarajan/go-db/custom_error"
 	"strings"
 )
 
@@ -33,11 +32,13 @@ func Tokenize(input string) ([]Token, error) {
 	return NewLexer(input).Lex()
 }
 
+// TokenList is a list of tokens with helper methods to utilise them.
 type TokenList struct {
 	Input  string
 	Tokens []Token
 }
 
+// Peek returns the first token in the list without modifying it, if it matches the expected type.
 func (t *TokenList) Peek(expected ...TokenType) (Token, error) {
 	if err := t.checkEnd(); err != nil {
 		return Token{}, err
@@ -48,6 +49,7 @@ func (t *TokenList) Peek(expected ...TokenType) (Token, error) {
 	return t.Tokens[0], nil
 }
 
+// Get returns and removes the first token in the list if it matches the expected type.
 func (t *TokenList) Get(expected ...TokenType) (Token, error) {
 	if err := t.checkEnd(); err != nil {
 		return Token{}, err
@@ -60,6 +62,7 @@ func (t *TokenList) Get(expected ...TokenType) (Token, error) {
 	return first, nil
 }
 
+// Consume consumes/removes the first token in the list if it matches the expected type.
 func (t *TokenList) Consume(expected ...TokenType) error {
 	if err := t.checkEnd(); err != nil {
 		return err
@@ -73,12 +76,16 @@ func (t *TokenList) Consume(expected ...TokenType) error {
 
 func (t *TokenList) checkEnd() error {
 	if len(t.Tokens) == 0 {
-		return custom_error.SyntaxError{
+		return SyntaxError{
 			Position: len([]rune(t.Input)),
 			Message:  "unexpected end of input",
 		}
 	}
 	return nil
+}
+
+func (t *TokenList) Len() int {
+	return len(t.Tokens)
 }
 
 func (t *TokenList) checkType(expected []TokenType) error {
@@ -92,15 +99,26 @@ func (t *TokenList) checkType(expected []TokenType) error {
 		}
 	}
 	if len(expected) == 1 {
-		return custom_error.SyntaxError{
+		return SyntaxError{
 			Position: token.From,
 			Message:  fmt.Sprintf("expected %s, got %q", expected[0], token.Value),
 		}
 	}
-	return custom_error.SyntaxError{
+	return SyntaxError{
 		Position: token.From,
 		Message:  fmt.Sprintf("expected one of %s, got %q", joinWith(expected), token.Value),
 	}
+}
+
+func (t *TokenList) ExpectedEnd() error {
+	if len(t.Tokens) > 0 {
+		l := t.Tokens[0]
+		return SyntaxError{
+			Position: t.Tokens[0].From,
+			Message:  fmt.Sprintf("got %s %q, expected end of input", l.Type, l.Value),
+		}
+	}
+	return nil
 }
 
 func joinWith(expected []TokenType) string {
