@@ -38,6 +38,8 @@ const (
 	TokenTypeOuter
 	TokenTypeJoin
 	TokenTypeOn
+	TokenTypeTrue
+	TokenTypeFalse
 )
 
 type BinaryOperator int
@@ -135,6 +137,10 @@ func (t TokenType) String() string {
 		return "Join"
 	case TokenTypeOn:
 		return "On"
+	case TokenTypeTrue:
+		return "True"
+	case TokenTypeFalse:
+		return "False"
 	}
 	return fmt.Sprintf("Unknown token type %d", t)
 }
@@ -155,6 +161,8 @@ var KeywordMap = map[string]TokenType{
 	"outer":  TokenTypeOuter,
 	"join":   TokenTypeJoin,
 	"on":     TokenTypeOn,
+	"true":   TokenTypeTrue,
+	"false":  TokenTypeFalse,
 }
 
 var SymbolMap = map[string]TokenType{

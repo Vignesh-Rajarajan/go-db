@@ -35,7 +35,7 @@ func ParseExpression(tokens *lexer.TokenList) (sql.Expression, *lexer.TokenList,
 
 // ParseValue parses a value from a list of tokens and returns the parsed value and the remaining tokens
 func ParseValue(tokens *lexer.TokenList) (sql.Expression, *lexer.TokenList, error) {
-	token, err := tokens.Peek(lexer.TokenTypeString, lexer.TokenTypeNumber, lexer.TokenTypeIdentifier)
+	token, err := tokens.Peek(lexer.TokenTypeString, lexer.TokenTypeNumber, lexer.TokenTypeIdentifier, lexer.TokenTypeTrue, lexer.TokenTypeFalse)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -45,6 +45,9 @@ func ParseValue(tokens *lexer.TokenList) (sql.Expression, *lexer.TokenList, erro
 		return ParseString(tokens)
 	case lexer.TokenTypeNumber:
 		return ParseNumber(tokens)
+	case lexer.TokenTypeTrue, lexer.TokenTypeFalse:
+		_ = tokens.Consume()
+		return sql.Boolean{Value: token.Type == lexer.TokenTypeTrue}, tokens, nil
 
 	default:
 		return ParseColumnReference(tokens)

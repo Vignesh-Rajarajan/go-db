@@ -10,12 +10,6 @@ type Statement interface {
 	String() string
 }
 
-// Decimal represents a decimal number
-type Decimal struct {
-	Value  int
-	Digits int
-}
-
 // Column represents a column in a table
 type Column struct {
 	Name string
@@ -46,6 +40,12 @@ type StringLiteral struct {
 
 func (s StringLiteral) String() string {
 	return fmt.Sprintf("String(%q)", s.Value)
+}
+
+// Decimal represents a decimal number
+type Decimal struct {
+	Value  int
+	Digits int
 }
 
 // NumberLiteral represents a number
@@ -88,6 +88,14 @@ type Star struct{}
 
 func (s Star) String() string {
 	return "Star"
+}
+
+type Boolean struct {
+	Value bool
+}
+
+func (b Boolean) String() string {
+	return fmt.Sprintf("Boolean(%v)", b.Value)
 }
 
 // TableReference represents a reference to a table
