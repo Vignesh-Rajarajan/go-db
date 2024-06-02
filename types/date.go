@@ -1,14 +1,16 @@
 package types
 
+import "fmt"
+
 type Date struct {
 	year, month, day int
 }
 
-func NewDate(year, month, day int) (Date, bool) {
+func NewDate(year, month, day int) Date {
 	if year < 1 || year > 9999 || month < 1 || month > 12 || day < 1 || day > daysInMonth(year, month) {
-		return Date{}, false
+		return Date{}
 	}
-	return Date{year: year, month: month, day: day}, true
+	return Date{year: year, month: month, day: day}
 }
 
 func daysInMonth(year int, month int) int {
@@ -53,4 +55,8 @@ func (d Date) Compare(v Value) Comparison {
 		return ComparisonGreater
 	}
 	return ComparisonEqual
+}
+
+func (d Date) String() string {
+	return fmt.Sprintf("Date(%4d-%2d-%2d)", d.year, d.month, d.day)
 }

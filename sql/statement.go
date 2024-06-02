@@ -3,6 +3,7 @@ package sql
 import (
 	"fmt"
 	"github.com/Vignesh-Rajarajan/go-db/lexer"
+	"github.com/Vignesh-Rajarajan/go-db/types"
 	"strings"
 )
 
@@ -42,15 +43,9 @@ func (s StringLiteral) String() string {
 	return fmt.Sprintf("String(%q)", s.Value)
 }
 
-// Decimal represents a decimal number
-type Decimal struct {
-	Value  int
-	Digits int
-}
-
 // NumberLiteral represents a number
 type NumberLiteral struct {
-	Value Decimal
+	Value types.Decimal
 }
 
 func (i NumberLiteral) String() string {
@@ -75,7 +70,10 @@ type ColumnReference struct {
 }
 
 func (c ColumnReference) String() string {
-	return fmt.Sprintf("Column(Relation: %s, Name: %s)", c.Relation, c.Name)
+	if c.Relation == "" {
+		return fmt.Sprintf("Column(%s)", c.Name)
+	}
+	return fmt.Sprintf("Column(%s.%s)", c.Relation, c.Name)
 }
 
 // SelectList represents a list of columns to select
@@ -134,7 +132,7 @@ const (
 func (j JoinType) String() string {
 	switch j {
 	case JoinTypeInner:
-		return "INNER"
+		return "inner"
 	case JoinTypeLeft:
 		return "left outer"
 	case JoinTypeRight:

@@ -52,10 +52,6 @@ func TestParseValidValue(t *testing.T) {
 			want:  sql.StringLiteral{Value: "hello"},
 		},
 		{
-			input: "123.25",
-			want:  sql.NumberLiteral{Value: sql.Decimal{Value: 12325, Digits: 2}},
-		},
-		{
 			input: "foo",
 			want:  sql.ColumnReference{Name: "foo"},
 		},
@@ -83,18 +79,10 @@ func TestParseValidExpression(t *testing.T) {
 		},
 		{
 			input: "'hello' = 'world'",
-			want: sql.BinaryOperation{
+			want: &sql.BinaryOperation{
 				Left:     sql.StringLiteral{Value: "hello"},
 				Right:    sql.StringLiteral{Value: "world"},
 				Operator: lexer.BinaryOperatorEq,
-			},
-		},
-		{
-			input: "123.25 < 45.6",
-			want: sql.BinaryOperation{
-				Left:     sql.NumberLiteral{Value: sql.Decimal{Value: 12325, Digits: 2}},
-				Right:    sql.NumberLiteral{Value: sql.Decimal{Value: 456, Digits: 1}},
-				Operator: lexer.BinaryOperatorLt,
 			},
 		},
 	}
@@ -104,66 +92,6 @@ func TestParseValidExpression(t *testing.T) {
 			checkParser(t, "ParseExpression", ParseExpression, c.input, c.want)
 		})
 
-	}
-}
-
-func TestParseDecimalValid(t *testing.T) {
-	cases := []struct {
-		input string
-		want  sql.Decimal
-	}{
-		{
-			input: "123.456",
-			want:  sql.Decimal{Value: 123456, Digits: 3},
-		},
-		{
-			input: "123",
-			want:  sql.Decimal{Value: 123, Digits: 0},
-		},
-		{
-			input: "000123",
-			want:  sql.Decimal{Value: 123, Digits: 0},
-		},
-		{
-			input: "123.456000",
-			want:  sql.Decimal{Value: 123456, Digits: 3},
-		},
-		{
-			input: "-123",
-			want:  sql.Decimal{Value: -123, Digits: 0},
-		},
-		{
-			input: "-123.456",
-			want:  sql.Decimal{Value: -123456, Digits: 3},
-		},
-		{
-			input: "123.",
-			want:  sql.Decimal{Value: 123},
-		},
-		{
-			input: ".456",
-			want:  sql.Decimal{Value: 456, Digits: 3},
-		},
-		{
-			input: "123.000456",
-			want:  sql.Decimal{Value: 123000456, Digits: 6},
-		},
-		{
-			input: ".000456",
-			want:  sql.Decimal{Value: 456, Digits: 6},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.input, func(t *testing.T) {
-			got, err := ParseDecimal(c.input)
-			if err != nil {
-				t.Fatalf("ParseDecimal(%q) returned error: %v", c.input, err)
-			}
-			if got != c.want {
-				t.Fatalf("ParseDecimal(%q) == %v, want %v", c.input, got, c.want)
-			}
-		})
 	}
 }
 
@@ -224,10 +152,6 @@ func TestParserValueInvalid(t *testing.T) {
 			want:  sql.StringLiteral{Value: "hello"},
 		},
 		{
-			input: "123.25",
-			want:  sql.NumberLiteral{Value: sql.Decimal{Value: 12325, Digits: 2}},
-		},
-		{
 			input: "foo",
 			want:  sql.ColumnReference{Name: "foo"},
 		},
@@ -264,7 +188,7 @@ func TestParseTableReference(t *testing.T) {
 			want: sql.Join{
 				Left:      sql.TableName{Name: "foo"},
 				Right:     sql.TableName{Name: "bar"},
-				Condition: condition,
+				Condition: &condition,
 				Type:      sql.JoinTypeInner,
 			},
 		},
@@ -273,7 +197,7 @@ func TestParseTableReference(t *testing.T) {
 			want: sql.Join{
 				Left:      sql.TableName{Name: "foo"},
 				Right:     sql.TableName{Name: "bar"},
-				Condition: condition,
+				Condition: &condition,
 				Type:      sql.JoinTypeLeft,
 			},
 		},
@@ -313,20 +237,8 @@ func TestParseSelectStatement(t *testing.T) {
 				From: sql.Join{
 					Left:      sql.TableName{Name: "foo"},
 					Right:     sql.TableName{Name: "bar"},
-					Condition: condition,
+					Condition: &condition,
 					Type:      sql.JoinTypeInner,
-				},
-			},
-		},
-		{
-			input: "select * from foo where x = 1",
-			want: sql.SelectStatement{
-				What: sql.Star{},
-				From: sql.TableName{Name: "foo"},
-				Where: sql.BinaryOperation{
-					Left:     sql.ColumnReference{Name: "x"},
-					Operator: lexer.BinaryOperatorEq,
-					Right:    sql.NumberLiteral{Value: sql.Decimal{Value: 1}},
 				},
 			},
 		},

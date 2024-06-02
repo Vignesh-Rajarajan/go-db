@@ -10,6 +10,7 @@ type Expression interface {
 	Type() types.Type
 	Evaluate(t *types.Row) types.Value
 	Check(schema types.TableSchema) error
+	String() string
 }
 
 type Constant struct {
@@ -22,6 +23,10 @@ func NewConstant(value types.Value) Constant {
 
 func (c Constant) Type() types.Type {
 	return c.Value.Type()
+}
+
+func (c Constant) String() string {
+	return fmt.Sprintf("%v", c.Value)
 }
 
 func (c Constant) Evaluate(t *types.Row) types.Value {
@@ -37,19 +42,23 @@ type ColumnReference struct {
 	T     types.Type
 }
 
-func NewColumnReference(index int, t types.Type) *ColumnReference {
-	return &ColumnReference{Index: index, T: t}
+func NewColumnReference(index int, t types.Type) ColumnReference {
+	return ColumnReference{Index: index, T: t}
 }
 
-func (c *ColumnReference) Type() types.Type {
+func (c ColumnReference) Type() types.Type {
 	return c.T
 }
 
-func (c *ColumnReference) Evaluate(t *types.Row) types.Value {
+func (c ColumnReference) String() string {
+	return fmt.Sprintf("ColumnReference(%d,%s)", c.Index, c.T)
+}
+
+func (c ColumnReference) Evaluate(t *types.Row) types.Value {
 	return t.Values[c.Index]
 }
 
-func (c *ColumnReference) Check(schema types.TableSchema) error {
+func (c ColumnReference) Check(schema types.TableSchema) error {
 	if c.Index < 0 || c.Index >= len(schema.Columns) {
 		return fmt.Errorf("column index out of range: %d", c.Index)
 	}
@@ -106,6 +115,10 @@ func (b *BinaryOperation) Check(schema types.TableSchema) error {
 	return nil
 }
 
+func (b *BinaryOperation) String() string {
+	return fmt.Sprintf("BinaryOperation(%s %s %s)", b.Left, b.Operator, b.Right)
+}
+
 type BinaryOperator int
 
 const (
@@ -116,3 +129,22 @@ const (
 	BinaryOperatorGt
 	BinaryOperatorGe
 )
+
+func (b BinaryOperator) String() string {
+	switch b {
+	case BinaryOperatorEq:
+		return "eq"
+	case BinaryOperatorNe:
+		return "ne"
+	case BinaryOperatorLt:
+		return "lt"
+	case BinaryOperatorLe:
+		return "le"
+	case BinaryOperatorGt:
+		return "gt"
+	case BinaryOperatorGe:
+		return "ge"
+
+	}
+	return "unknown"
+}

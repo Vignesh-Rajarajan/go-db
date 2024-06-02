@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 type Text struct {
 	value string
 }
@@ -24,4 +26,8 @@ func (t Text) Compare(next Value) Comparison {
 		return ComparisonGreater
 	}
 	return ComparisonEqual
+}
+
+func (t Text) String() string {
+	return fmt.Sprintf("%q", t.value)
 }

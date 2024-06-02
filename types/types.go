@@ -21,4 +21,19 @@ const (
 type Value interface {
 	Compare(next Value) Comparison
 	Type() Type
+	String() string
+}
+
+func (t Type) String() string {
+	switch t {
+	case TypeDate:
+		return "date"
+	case TypeText:
+		return "text"
+	case TypeBoolean:
+		return "boolean"
+	case TypeDecimal:
+		return "decimal"
+	}
+	return "unknown"
 }

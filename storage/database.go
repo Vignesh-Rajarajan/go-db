@@ -6,8 +6,13 @@ import (
 )
 
 type Database struct {
-	name   string
 	tables map[string]*types.Relation
+}
+
+func NewDatabase() *Database {
+	return &Database{
+		tables: make(map[string]*types.Relation),
+	}
 }
 
 func (db *Database) GetTable(name string) (*types.Relation, error) {
@@ -16,4 +21,16 @@ func (db *Database) GetTable(name string) (*types.Relation, error) {
 		return nil, fmt.Errorf("table %s not found", name)
 	}
 	return t, nil
+}
+
+func (db *Database) CreateTable(name string, schema types.TableSchema) (*types.Relation, error) {
+	_, ok := db.tables[name]
+	if ok {
+		return nil, fmt.Errorf("table %s already exists", name)
+	}
+	table := &types.Relation{
+		Schema: schema,
+	}
+	db.tables[name] = table
+	return table, nil
 }

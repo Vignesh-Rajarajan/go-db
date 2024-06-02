@@ -3,6 +3,7 @@ package parser
 import (
 	"github.com/Vignesh-Rajarajan/go-db/lexer"
 	"github.com/Vignesh-Rajarajan/go-db/sql"
+	"github.com/Vignesh-Rajarajan/go-db/types"
 )
 
 type Parser[T any] func(*lexer.TokenList) (T, *lexer.TokenList, error)
@@ -25,7 +26,7 @@ func ParseExpression(tokens *lexer.TokenList) (sql.Expression, *lexer.TokenList,
 	if err != nil {
 		return nil, nil, err
 	}
-	result := sql.BinaryOperation{
+	result := &sql.BinaryOperation{
 		Left:     left,
 		Right:    right,
 		Operator: op,
@@ -69,7 +70,7 @@ func ParseNumber(tokens *lexer.TokenList) (sql.Expression, *lexer.TokenList, err
 	if err != nil {
 		return sql.NumberLiteral{}, nil, err
 	}
-	decimal, err := ParseDecimal(token.Value)
+	decimal, err := types.ParseDecimal(token.Value)
 	if err != nil {
 		return sql.NumberLiteral{}, nil, lexer.SyntaxError{
 			Position: token.From,

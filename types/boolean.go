@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 type Boolean struct {
 	value bool
 }
@@ -28,4 +30,8 @@ func (b Boolean) Compare(next Value) Comparison {
 		return ComparisonGreater
 	}
 	return ComparisonLess
+}
+
+func (b Boolean) String() string {
+	return fmt.Sprintf("Boolean(%v)", b.value)
 }

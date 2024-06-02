@@ -25,10 +25,7 @@ func TestNewDate(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		got, ok := NewDate(c.year, c.month, c.day)
-		if !ok {
-			t.Errorf("NewDate(%d, %d, %d) returned false, want true", c.year, c.month, c.day)
-		}
+		got := NewDate(c.year, c.month, c.day)
 		if got != c.want {
 			t.Errorf("NewDate(%d, %d, %d) == %v, want %v", c.year, c.month, c.day, got, c.want)
 		}
