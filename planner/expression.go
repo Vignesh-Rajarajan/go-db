@@ -9,36 +9,36 @@ import (
 	"strings"
 )
 
-func ConvertExpression(input sql.Expression, schema types.TableSchema) (query.Expression, error) {
+func ConvertExpression(input sql.Expression, schema types.TableSchema) (query.Expression, string, error) {
 	switch e := input.(type) {
 	case sql.StringLiteral:
-		return query.NewConstant(types.NewText(e.Value)), nil
+		return query.NewConstant(types.NewText(e.Value)), "", nil
 	case sql.Boolean:
-		return query.NewConstant(types.NewBoolean(e.Value)), nil
+		return query.NewConstant(types.NewBoolean(e.Value)), "", nil
 	case sql.NumberLiteral:
-		return query.NewConstant(e.Value), nil
+		return query.NewConstant(e.Value), "", nil
 	case sql.ColumnReference:
-		return convertReference(e, schema)
+		return convertColumnReference(e, schema)
 	case *sql.BinaryOperation:
 		return convertBinaryOperation(*e, schema)
 	}
-	return nil, fmt.Errorf("ConvertExpression:: not implemented: %T", input)
+	return nil, "", fmt.Errorf("ConvertExpression:: not implemented: %T", input)
 }
 
-func convertReference(e sql.ColumnReference, schema types.TableSchema) (query.Expression, error) {
+func convertColumnReference(e sql.ColumnReference, schema types.TableSchema) (query.Expression, string, error) {
 	if e.Relation == "" {
-		index, err := FindColumnIndex(e.Name, schema)
+		index, name, err := FindColumnIndex(e.Name, schema)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		return query.NewColumnReference(index, schema.Columns[index].Type), nil
+		return query.NewColumnReference(index, schema.Columns[index].Type), name, nil
 	}
 	name := fmt.Sprintf("%s.%s", e.Relation, e.Name)
-	index, t, ok := schema.GetColumn(e.Name)
+	index, t, ok := schema.GetColumn(name)
 	if !ok {
-		return nil, fmt.Errorf("column %s not found", name)
+		return nil, "", fmt.Errorf("column %s not found", name)
 	}
-	return query.NewColumnReference(index, t), nil
+	return query.NewColumnReference(index, t), name, nil
 }
 
 func ConvertBinaryOperator(input lexer.BinaryOperator) query.BinaryOperator {
@@ -60,34 +60,37 @@ func ConvertBinaryOperator(input lexer.BinaryOperator) query.BinaryOperator {
 	panic(fmt.Errorf("ConvertBinaryOperator:: not implemented: %v", input))
 }
 
-func convertBinaryOperation(input sql.BinaryOperation, schema types.TableSchema) (*query.BinaryOperation, error) {
-	left, err := ConvertExpression(input.Left, schema)
+func convertBinaryOperation(input sql.BinaryOperation, schema types.TableSchema) (*query.BinaryOperation, string, error) {
+	left, _, err := ConvertExpression(input.Left, schema)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	right, err := ConvertExpression(input.Right, schema)
+	right, _, err := ConvertExpression(input.Right, schema)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	operator := ConvertBinaryOperator(input.Operator)
-	return query.NewBinaryOperation(left, right, operator)
+	expr, err := query.NewBinaryOperation(left, right, operator)
+	return expr, "", err
 }
 
-func FindColumnIndex(name string, schema types.TableSchema) (int, error) {
+func FindColumnIndex(name string, schema types.TableSchema) (int, string, error) {
 	suffix := fmt.Sprintf(".%s", name)
 	var index int
+	var resName string
 	var found bool
 	for i, column := range schema.Columns {
 		if strings.HasSuffix(column.Name, suffix) {
 			if found {
-				return 0, fmt.Errorf("unkown column name: %s", name)
+				return 0, "", fmt.Errorf("unkown column name: %s", name)
 			}
 			index = i
+			resName = column.Name
 			found = true
 		}
 	}
 	if !found {
-		return 0, fmt.Errorf("column not found: %s", name)
+		return 0, "", fmt.Errorf("column not found: %s", name)
 	}
-	return index, nil
+	return index, resName, nil
 }

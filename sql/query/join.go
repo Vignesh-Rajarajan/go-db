@@ -41,7 +41,7 @@ func NewJoin(t JoinType, left QueryPlan, right QueryPlan, condition Expression) 
 	if condition.Type() != types.TypeBoolean {
 		return nil, fmt.Errorf("condition must be a boolean expression %v", condition)
 	}
-	combinedSchema := combineSchemas(left.Schema(), right.Schema())
+	combinedSchema := CombineSchemas(left.Schema(), right.Schema())
 	if err := condition.Check(combinedSchema); err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (j *Join) Print(printer *Printer) {
 
 }
 
-func combineSchemas(left, right types.TableSchema) types.TableSchema {
+func CombineSchemas(left, right types.TableSchema) types.TableSchema {
 	var columns []types.ColumnSchema
 	columns = append(columns, left.Columns...)
 	columns = append(columns, right.Columns...)

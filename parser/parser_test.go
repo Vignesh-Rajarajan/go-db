@@ -185,7 +185,7 @@ func TestParseTableReference(t *testing.T) {
 		},
 		{
 			input: "foo join bar on foo.x = bar.y",
-			want: sql.Join{
+			want: &sql.Join{
 				Left:      sql.TableName{Name: "foo"},
 				Right:     sql.TableName{Name: "bar"},
 				Condition: &condition,
@@ -194,7 +194,7 @@ func TestParseTableReference(t *testing.T) {
 		},
 		{
 			input: "foo left outer join bar on foo.x = bar.y",
-			want: sql.Join{
+			want: &sql.Join{
 				Left:      sql.TableName{Name: "foo"},
 				Right:     sql.TableName{Name: "bar"},
 				Condition: &condition,
@@ -234,7 +234,7 @@ func TestParseSelectStatement(t *testing.T) {
 			input: "select * from foo join bar on foo.x = bar.y",
 			want: sql.SelectStatement{
 				What: sql.Star{},
-				From: sql.Join{
+				From: &sql.Join{
 					Left:      sql.TableName{Name: "foo"},
 					Right:     sql.TableName{Name: "bar"},
 					Condition: &condition,

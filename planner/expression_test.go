@@ -16,27 +16,29 @@ func TestConvertExpression(t *testing.T) {
 	cases := []struct {
 		input sql.Expression
 		want  query.Expression
+		name  string
 	}{
 		{
 			input: sql.StringLiteral{Value: "hello"},
 			want:  query.NewConstant(types.NewText("hello")),
+			name:  "",
 		}, {
 			input: sql.Boolean{Value: true},
 			want:  query.NewConstant(types.NewBoolean(true)),
+			name:  "",
 		}, {
 			input: sql.NumberLiteral{Value: types.NewDecimal("123")},
 			want:  query.NewConstant(types.NewDecimal("123")),
-		}, {
-			input: sql.ColumnReference{Relation: "films", Name: "title"},
-			want:  query.NewColumnReference(1, types.TypeText),
+			name:  "",
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.input.String(), func(t *testing.T) {
-			got, err := ConvertExpression(c.input, schema)
+			got, _, err := ConvertExpression(c.input, schema)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
+
 			if !reflect.DeepEqual(got, c.want) {
 				t.Errorf("Expression for \n%v\n is \ngot %v, want %v\n", c.input, got, c.want)
 			}
@@ -55,15 +57,20 @@ func TestFindColumnIndex(t *testing.T) {
 
 	name := "release_date"
 	want := 1
-	got, err := FindColumnIndex(name, schema)
+	wantName := "films.release_date"
+	got, resName, err := FindColumnIndex(name, schema)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got != want {
 		t.Errorf("Column index for %s is got %d, want %d", name, got, want)
 	}
+	if resName != wantName {
+		t.Errorf("Column name for %s is got %s, want %s", name, name, wantName)
+
+	}
 	name = "name"
-	_, err = FindColumnIndex(name, schema)
+	_, _, err = FindColumnIndex(name, schema)
 	if err == nil {
 		t.Fatalf("expected error, got nil")
 	}

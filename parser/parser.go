@@ -156,7 +156,7 @@ func ParseTableReference(tokens *lexer.TokenList) (sql.TableReference, *lexer.To
 		return left, remTokens, nil
 	}
 
-	join := sql.Join{
+	join := &sql.Join{
 		Left: left,
 	}
 

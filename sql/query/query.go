@@ -155,7 +155,7 @@ func (p *Project) Schema() types.TableSchema {
 
 func (p *Project) Run(db *storage.Database) *types.Relation {
 	from := p.From.Run(db)
-	var rows [][]types.Value
+	var rows = make([][]types.Value, len(from.Rows))
 	for i := range from.Rows {
 		row := make([]types.Value, len(p.Columns))
 		for j := range p.Columns {

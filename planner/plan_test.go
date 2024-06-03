@@ -27,6 +27,20 @@ func parse(t *testing.T, stmt string) *sql.SelectStatement {
 func TestPlan(t *testing.T) {
 	sampleData := storage.GetSampleData()
 
+	join, err := query.NewJoin(
+		query.JoinTypeInner,
+		query.NewLoad("films", sampleData.Films.Schema),
+		query.NewLoad("people", sampleData.People.Schema),
+		&query.BinaryOperation{
+			Left:     query.ColumnReference{Index: 2, T: types.TypeDecimal},
+			Right:    query.ColumnReference{Index: 4, T: types.TypeDecimal},
+			Operator: query.BinaryOperatorEq,
+		},
+	)
+	if err != nil {
+		t.Fatalf("unexpected error while creating join : %v", err)
+	}
+
 	cases := []struct {
 		stmt string
 		want query.QueryPlan
@@ -51,6 +65,16 @@ func TestPlan(t *testing.T) {
 						"films.id",
 						query.ColumnReference{Index: 0, T: types.TypeDecimal},
 					},
+				},
+			},
+		},
+		{
+			stmt: "SELECT films.id, people.id FROM films JOIN people ON films.id = people.id",
+			want: &query.Project{
+				From: join,
+				Columns: []query.OutputColumn{
+					{"films.id", query.ColumnReference{Index: 0, T: types.TypeDecimal}},
+					{"people.id", query.ColumnReference{Index: 4, T: types.TypeDecimal}},
 				},
 			},
 		},

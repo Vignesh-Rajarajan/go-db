@@ -8,35 +8,10 @@ import (
 )
 
 func Plan(stmt *sql.SelectStatement, db *storage.Database) (query.QueryPlan, error) {
-	var plan query.QueryPlan
-	var err error
-	switch f := stmt.From.(type) {
-
-	case sql.TableName:
-		table, err := db.GetTable(f.Name)
-		if err != nil {
-			return nil, err
-		}
-		plan = query.NewLoad(f.Name, table.Schema)
-	case *sql.Join:
-		return nil, fmt.Errorf("not implemented: %T", f)
-
-	default:
-		return nil, fmt.Errorf("not implemented: %T", f)
+	plan, err := convertTableReference(stmt.From, db)
+	if err != nil {
+		return nil, err
 	}
-
-	if stmt.Where != nil {
-		schema := plan.Schema()
-		condition, err := ConvertExpression(stmt.Where, schema)
-		if err != nil {
-			return nil, err
-		}
-		plan, err = query.NewSelect(plan, condition)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	switch what := stmt.What.(type) {
 	case sql.Star:
 	// Do nothing
@@ -44,12 +19,12 @@ func Plan(stmt *sql.SelectStatement, db *storage.Database) (query.QueryPlan, err
 		schema := plan.Schema()
 		columns := make([]query.OutputColumn, len(what.Expressions))
 		for i, e := range what.Expressions {
-			converted, err := ConvertExpression(e, schema)
+			converted, name, err := ConvertExpression(e, schema)
 			if err != nil {
 				return nil, err
 			}
 			columns[i].Expression = converted
-			columns[i].Name = schema.Columns[i].Name
+			columns[i].Name = name
 		}
 		plan, err = query.NewProject(plan, columns)
 		if err != nil {
@@ -57,7 +32,49 @@ func Plan(stmt *sql.SelectStatement, db *storage.Database) (query.QueryPlan, err
 
 		}
 	default:
-		return nil, fmt.Errorf("Plan:: not implemented: %T", what)
+		return nil, fmt.Errorf("plan:: not implemented: %T", what)
 	}
 	return plan, nil
+}
+
+func convertTableReference(ref sql.TableReference, db *storage.Database) (query.QueryPlan, error) {
+	switch f := ref.(type) {
+	case sql.TableName:
+		table, err := db.GetTable(f.Name)
+		if err != nil {
+			return nil, err
+		}
+		return query.NewLoad(f.Name, table.Schema), nil
+	case *sql.Join:
+		joinType := convertJoinType(f.Type)
+		left, err := convertTableReference(f.Left, db)
+		if err != nil {
+			return nil, err
+		}
+		right, err := convertTableReference(f.Right, db)
+		if err != nil {
+			return nil, err
+		}
+
+		schema := query.CombineSchemas(left.Schema(), right.Schema())
+		condition, _, err := ConvertExpression(f.Condition, schema)
+		if err != nil {
+			return nil, err
+		}
+		return query.NewJoin(joinType, left, right, condition)
+	}
+
+	return nil, fmt.Errorf("plan:: not implemented: %T", ref)
+}
+
+func convertJoinType(t sql.JoinType) query.JoinType {
+	switch t {
+	case sql.JoinTypeInner:
+		return query.JoinTypeInner
+	case sql.JoinTypeLeft:
+		return query.JoinTypeLeftOuter
+	case sql.JoinTypeRight:
+		return query.JoinTypeRightOuter
+	}
+	return query.JoinTypeInner
 }
